@@ -1,13 +1,13 @@
 # Loan-Approval-Analysis-SQL-PowerBI-Python
 End-to-end data analysis project on loan approval prediction using SQL Server, Power BI and Python — covering data cleaning, EDA, visualization and machine learning.
 
-# Loan Approval Decoded — What Banks Really Look For
+# Loan Approval Decoded - What Banks Really Look For
 
 ## Project Overview
 An end-to-end data analysis project analyzing 614 loan applications 
 to uncover what factors drive loan approval decisions at banks.
 Starting from raw uncleaned data, this project covers the complete 
-data analytics pipeline — cleaning, transformation, SQL analysis, 
+data analytics pipeline - cleaning, transformation, SQL analysis, 
 interactive dashboarding and machine learning prediction.
 Built using SQL Server, Power BI and Python.
 
@@ -26,10 +26,10 @@ Built using SQL Server, Power BI and Python.
 ## Key Findings
 
 ### Credit & Risk
-- Credit history is the #1 predictor of approval — good credit 
+- Credit history is the #1 predictor of approval - good credit 
   achieves 79% approval vs just 7% for bad credit
 - Even high income earners with bad credit get approved only 13% 
-  of the time — money cannot compensate for poor credit
+  of the time - money cannot compensate for poor credit
 - High risk applicants have only 20% approval vs 87% for low risk
 - 50 applicants had missing credit history — the largest NULL 
   count in the dataset
