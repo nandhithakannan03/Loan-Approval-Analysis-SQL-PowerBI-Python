@@ -1,1 +1,425 @@
 
+create database Loan_approval 
+
+use Loan_approval 
+
+SELECT Top 100 * FROM Loan_Approval_Dataset
+
+-- Cleaning the Data 
+	-- Count of all NULLS
+SELECT
+	COUNT(CASE WHEN Loan_ID IS NULL THEN 1 END) AS null_ID,
+	COUNT(CASE WHEN gender IS NULL THEN 1 END) AS null_gender,
+	COUNT(CASE WHEN married IS NULL THEN 1 END) AS null_married,
+	COUNT(CASE WHEN self_employed IS NULL THEN 1 END) AS null_employment,
+	COUNT(CASE WHEN education IS NULL THEN 1 END) AS null_education,
+	COUNT(CASE WHEN dependents IS NULL THEN 1 END) AS null_dependent,
+	COUNT(CASE WHEN applicantincome IS NULL THEN 1 END) AS null_income,
+	COUNT(CASE WHEN LoanAmount IS NULL THEN 1 END) AS null_loanamount,COUNT(CASE WHEN Loan_Amount_Term IS NULL THEN 1 END) AS null_term,
+	COUNT(CASE WHEN Credit_History IS NULL THEN 1 END) AS null_credit,
+	COUNT(CASE WHEN Loan_Amount_Term IS NULL THEN 1 END) AS null_term,
+	COUNT(CASE WHEN Property_area IS NULL THEN 1 END) AS null_area,
+	COUNT(CASE WHEN Loan_Status IS NULL THEN 1 END) AS null_status
+FROM Loan_approval_dataset;
+	
+	--Finding the MODE,MEDIAN of the columns to fill the NULL Values
+SELECT gender,COUNT(*) 
+	FROM Loan_approval_dataset
+		GROUP BY gender
+		Order BY COUNT(*) asc
+
+SELECT married,COUNT(*) 
+	FROM Loan_approval_dataset
+		GROUP BY married
+		Order BY COUNT(*) asc
+
+SELECT self_employed,COUNT(*) 
+	FROM Loan_approval_dataset
+		GROUP BY self_employed
+		Order BY COUNT(*) asc
+
+SELECT dependents,COUNT(*) 
+	FROM Loan_approval_dataset
+		GROUP BY dependents
+		Order BY COUNT(*) asc
+
+SELECT Credit_History,COUNT(*) 
+	FROM Loan_approval_dataset
+		GROUP BY Credit_History
+		Order BY COUNT(*) asc
+
+SELECT Loan_Amount_Term ,COUNT(*) 
+	FROM Loan_approval_dataset
+		GROUP BY Loan_Amount_Term
+		Order BY COUNT(*) asc
+
+-- Filling Nulls with mode dervied
+UPDATE Loan_approval_dataset SET Gender = 'Male' WHERE Gender IS NULL;
+UPDATE Loan_approval_dataset SET Married = 'Yes' WHERE Married IS NULL;
+UPDATE Loan_approval_dataset SET Dependents = '0' WHERE Dependents IS NULL;
+UPDATE Loan_approval_dataset SET Self_Employed = 'No' WHERE Self_Employed IS NULL;
+UPDATE Loan_approval_dataset SET Loan_Amount_Term = 360 WHERE Loan_Amount_Term IS NULL;
+UPDATE Loan_approval_dataset SET Credit_History = 1 WHERE Credit_History IS NULL;
+
+--Calculate Median Loan Amount 
+
+--ERROR:Operand data type nvarchar is invalid for avg operator.
+SELECT AVG(LoanAmount) as avg_loan
+FROM Loan_Approval_Dataset
+WHERE LoanAmount is not null 
+
+--Altering the Data Type 
+SELECT COLUMN_NAME, DATA_TYPE 
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'Loan_approval_dataset'
+
+ALTER TABLE Loan_approval_dataset
+ALTER column LoanAmount decimal
+
+ALTER TABLE Loan_approval_dataset
+ALTER column CoapplicantIncome decimal
+
+ALTER TABLE Loan_approval_dataset
+ALTER column Credit_History int 
+
+--Finding Median after altering the datatype
+
+/*Why AVG instead of median here? 
+With only 22 nulls out of 614 rows, the difference between mean and median is 
+very small and wont significantly affect your analysis. 
+Median matters more when nulls are a large proportion of your data*/
+
+SELECT AVG(LoanAmount) as avg_loan
+FROM Loan_Approval_Dataset
+WHERE LoanAmount is not null
+
+UPDATE Loan_approval_dataset SET LoanAmount = 146.41 WHERE LoanAmount IS NULL;
+
+-- Convert Dependents "3+" to 3
+UPDATE Loan_approval_dataset SET Dependents = '3' WHERE Dependents = '3+';
+
+SELECT COUNT(*), Dependents FROM Loan_approval_dataset
+GROUP BY Dependents
+
+--Outlier Detection
+
+SELECT 
+AVG(ApplicantIncome) as avgincome,
+AVG(LoanAmount) as avgloan,
+MAX(ApplicantIncome) as maxincome,
+MAX(LoanAmount) as maxloan,
+MIN(ApplicantIncome) as minincome,
+MIN(LoanAmount) as minloan
+FROM Loan_approval_dataset
+
+/*ApplicantIncome:
+Average is ₹5,403 but max is ₹81,000
+That's 15x the average — almost certainly an outlier
+
+LoanAmount:
+Average is ₹146,400 but max is ₹700,000
+Minimum is just ₹9,000 — suspiciously low*/
+
+UPDATE Loan_approval_dataset
+	SET ApplicantIncome = (SELECT 3 * AVG(ApplicantIncome) 
+	FROM Loan_approval_dataset)
+		WHERE ApplicantIncome > (SELECT 3 * AVG(ApplicantIncome) 
+		FROM Loan_approval_dataset)
+	
+SELECT COUNT(*) FROM Loan_approval_dataset
+	WHERE ApplicantIncome >
+	(SELECT 3* AVG(ApplicantIncome)
+	FROM Loan_approval_dataset)
+
+SELECT 3* AVG(LoanAmount) from Loan_approval_dataset
+
+UPDATE Loan_approval_dataset 
+SET LoanAmount = 439.20 WHERE Loanamount> 439.2
+
+SELECT MAX(LoanAmount) FROM Loan_approval_dataset
+
+
+--Creating new measure household income 
+ALTER TABLE Loan_approval_dataset
+ADD Householdincome decimal 
+
+UPDATE Loan_approval_dataset 
+SET Householdincome= applicantincome+CoapplicantIncome
+
+SELECT TOP 5 Householdincome 
+FROM Loan_approval_dataset
+
+--Creating the LoanAmount_Actual which converts LoanAmount from thousands to actual rupees
+
+ALTER TABLE Loan_approval_dataset
+ADD LoanAmount_Actual float 
+
+UPDATE Loan_approval_dataset
+SET LoanAmount_Actual=Loanamount*1000
+
+SELECT TOP 5 LoanAmount_Actual
+FROM Loan_approval_dataset
+
+
+--EMI ESTIMATION 
+ALTER TABLE Loan_approval_dataset
+ADD EMI float 
+
+UPDATE Loan_approval_dataset
+SET EMI=LoanAmount_Actual/Loan_Amount_Term
+
+SELECT TOP 5 EMI
+FROM Loan_approval_dataset
+
+/*DTI Ratio (Debt to Income)
+This measures how much of a person's income goes toward loan repayment. Formula is:
+
+DTI = (LoanAmount_Actual / Household_Income) × 100*/
+
+ALTER TABLE Loan_approval_dataset
+ADD DTI float 
+
+UPDATE Loan_approval_dataset
+SET DTI=(LoanAmount_Actual / Householdincome) *100
+
+UPDATE Loan_approval_dataset
+SET DTI=(EMI/ Householdincome) *100
+
+SELECT TOP 5 DTI 
+FROM Loan_approval_dataset
+
+
+
+/* Phase 2:Analaysis 
+1. Overall Approval Rate */
+
+SELECT 
+    COUNT(*) AS total,
+    SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) AS approved,
+    SUM(CASE WHEN Loan_Status = 'N' THEN 1 ELSE 0 END) AS rejected,
+    ROUND(100* SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) / COUNT(*), 2) AS approval_pct
+FROM Loan_approval_dataset
+
+
+--Gender wise approval rates 
+SELECT GENDER,COUNT(*),
+	SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) AS Approved ,
+    SUM(CASE WHEN Loan_Status = 'N' THEN 1 ELSE 0 END) AS Notapproved,
+	ROUND(100* SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) / COUNT(*), 2) AS approval_pct
+FROM Loan_approval_dataset
+GROUP BY GENDER
+
+--Both genders have similar approval rates — Female 66.9% vs Male 69.1%.
+--Gender doesn't seem to be a major factor!
+
+
+--EDUCATION WISE APPROVAL 
+SELECT EDUCATION,COUNT(*),
+	SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) AS Approved ,
+    SUM(CASE WHEN Loan_Status = 'N' THEN 1 ELSE 0 END) AS Notapproved,
+	ROUND(100* SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) / COUNT(*), 2) AS approval_pct
+FROM Loan_approval_dataset
+GROUP BY EDUCATION 
+
+--Graduates have a 9% higher approval rate — education clearly plays a role
+
+
+--Propert area wise approval rate 
+SELECT Property_Area,COUNT(*),
+	SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) AS Approved ,
+    SUM(CASE WHEN Loan_Status = 'N' THEN 1 ELSE 0 END) AS Notapproved,
+	ROUND(100* SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) / COUNT(*), 2) AS approval_pct
+FROM Loan_approval_dataset
+GROUP BY Property_Area
+ORDER BY approval_pct Desc
+
+--emiurban areas have significantly higher approval rates than Rural — 15% difference! 
+--Interesting for a financial inclusion story.
+
+
+--Marital status wise approval rate 
+ 
+ SELECT Married,COUNT(*),
+	SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) AS Approved ,
+    SUM(CASE WHEN Loan_Status = 'N' THEN 1 ELSE 0 END) AS Notapproved,
+	ROUND(100* SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) / COUNT(*), 2) AS approval_pct
+FROM Loan_approval_dataset
+GROUP BY Married
+ORDER BY approval_pct Desc
+--Married applicants have a 9% higher approval rate — banks likely see dual income households as lower risk
+
+--Credit history 
+ SELECT Credit_history,COUNT(*),
+	SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) AS Approved ,
+    SUM(CASE WHEN Loan_Status = 'N' THEN 1 ELSE 0 END) AS Notapproved,
+	ROUND(100* SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) / COUNT(*), 2) AS approval_pct
+FROM Loan_approval_dataset
+GROUP BY Credit_history
+ORDER BY approval_pct Desc
+
+/*Good credit → 79% approval
+Bad credit → 7% approval
+
+That's a 72% difference — credit history is by far the strongest predictor of loan approval. 
+Every other factor combined doesn't come close to this gap */
+
+
+--Approval Rate by Risk Tier
+WITH RiskCTE AS (
+    SELECT 
+        Loan_Status,
+        CASE
+            WHEN Credit_History = 1 AND LoanAmount < 150 AND ApplicantIncome > 5000 THEN 'Low Risk'
+            WHEN Credit_History = 1 AND LoanAmount BETWEEN 150 AND 300 THEN 'Medium Risk'
+            WHEN Credit_History = 0 OR LoanAmount > 300 THEN 'High Risk'
+            ELSE 'Uncategorized'
+        END AS risk_tier
+    FROM Loan_approval_dataset
+)
+SELECT 
+    risk_tier,
+    COUNT(*) AS total,
+    SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) AS approved,
+    ROUND(100 * SUM(CASE WHEN Loan_Status ='Y' THEN 1 ELSE 0 END) / COUNT(*), 2) AS approval_pct
+FROM RiskCTE
+GROUP BY risk_tier
+ORDER BY approval_pct DESC;
+
+/*High Risk applicants have only 20% approval rate vs 87% for Low Risk — a massive 67% gap
+Uncategorized has 293 rows — that's a large chunk worth investigating later.*/
+
+ --Average DTI for Approved vs Rejected
+SELECT Loan_status,AVG(DTI) as average
+FROM Loan_Approval_Dataset
+GROUP BY Loan_Status
+/*Rejected applicants have a higher DTI — they're borrowing more relative to their income. 
+Banks clearly factor in repayment burden*/
+
+--Average Household Income for Approved vs Rejected
+SELECT Loan_status,AVG(Householdincome) as average
+FROM Loan_Approval_Dataset
+GROUP BY Loan_Status
+
+/*Rejected applicants actually earn more on average than approved ones 
+This confirms what we saw earlier income alone doesn't drive approval. 
+Credit history matters far more than how much you earn*/
+
+--Average EMI for Approved vs Rejected
+SELECT Loan_status,AVG(EMI) as average
+FROM Loan_Approval_Dataset
+GROUP BY Loan_Status
+
+/*Rejected applicants have higher monthly EMI burden — consistent with the DTI finding from Query 8.
+Banks are cautious about high monthly repayment*/
+
+
+WITH IncomeCTE AS (
+	SELECT 
+		Loan_status,
+		CASE 
+			WHEN ApplicantIncome < 2500 THEN 'Lowerincome'
+			WHEN ApplicantIncome between 2500 and 5000 THEN 'Midincome'
+			WHEN ApplicantIncome between 5001 and 10000 THEN 'Uppermidincome'
+			WHEN ApplicantIncome > 10000 THEN 'HighIncome'
+			ELSE 'Uncategorized'
+        END AS income_tier
+	FROM Loan_Approval_Dataset
+)
+SELECT 
+    income_tier,
+    COUNT(*) AS total,
+    SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) AS approved,
+    ROUND(100 * SUM(CASE WHEN Loan_Status ='Y' THEN 1 ELSE 0 END) / COUNT(*), 2) AS approval_pct
+FROM IncomeCTE
+GROUP BY income_tier
+ORDER BY approval_pct DESC;
+
+/*Approval rates are almost identical across all income brackets — only a 3% difference between highest and lowest 
+This further confirms that income level barely influences approval — credit history is still the dominant factor*/
+
+--Average Loan Amount by Property Area
+SELECT Property_Area, AVG(LoanAmount_Actual) as average
+FROM Loan_Approval_Dataset
+GROUP BY Property_Area
+
+/*Rural applicants borrow the most on average but have the lowest approval rate this explains why banks are cautious. 
+Higher loan amounts in a higher risk area means more exposure*/
+
+
+--How does Self Employment affect approval?
+SELECT Self_Employed, 
+COUNT(*) AS total,
+SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) AS approved,
+ROUND(100 * SUM(CASE WHEN Loan_Status ='Y' THEN 1 ELSE 0 END) / COUNT(*), 2) AS approval_pct
+FROM Loan_Approval_Dataset
+GROUP BY Self_Employed
+
+/*Exactly the same approval rate — 68% for both. Self employment has zero impact on approval in this dataset. 
+Banks don't seem to penalize self employed applicants here.*/
+
+
+--How does number of Dependents affect approval?
+SELECT Dependents, 
+COUNT(*) AS total,
+SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) AS approved,
+ROUND(100 * SUM(CASE WHEN Loan_Status ='Y' THEN 1 ELSE 0 END) / COUNT(*), 2) AS approval_pct
+FROM Loan_Approval_Dataset
+GROUP BY Dependents
+ORDER BY Dependents asc
+
+/*Applicants with 2 dependents have the highest approval rate at 75% — surprisingly higher than those with 0! 
+No clear linear trend here.
+Having dependents doesn't significantly hurt your chances.*/
+
+--Education + Employment combination with highest approval
+SELECT Education,Self_employed,
+COUNT(*) AS total,
+SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) AS approved,
+ROUND(100 * SUM(CASE WHEN Loan_Status ='Y' THEN 1 ELSE 0 END) / COUNT(*), 2) AS approval_pct
+FROM Loan_Approval_Dataset
+GROUP BY Education,Self_employed
+ORDER BY approval_pct
+
+/* Being a Graduate gives you 70% approval regardless of employment type 
+self employed graduates do just as well as salaried graduates!
+Not Graduates fare worse across the board*/
+
+
+--High Income Applicants with Bad Credit — Do they still get rejected?
+SELECT 
+COUNT(*) AS total,
+SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) AS approved,
+ROUND(100 * SUM(CASE WHEN Loan_Status ='Y' THEN 1 ELSE 0 END) / COUNT(*), 2) AS approval_pct
+FROM Loan_Approval_Dataset
+WHERE 
+ApplicantIncome > (Select AVG(ApplicantIncome) FROM Loan_Approval_Dataset) and 
+Credit_History=0
+
+/*Even if you earn above average income, bad credit gives you only a 13% chance of approval — compared to 79% for good credit holders.
+This is the strongest proof in your entire analysis that:
+"Money can't buy loan approval — your credit history can."*/
+
+--What % of applicants have EMI exceeding 50% of their income?
+SELECT 
+COUNT(*) AS total,
+SUM(CASE WHEN Loan_Status = 'Y' THEN 1 ELSE 0 END) AS approved,
+ROUND(100 * SUM(CASE WHEN Loan_Status ='Y' THEN 1 ELSE 0 END) / COUNT(*), 2) AS approval_pct
+FROM Loan_Approval_Dataset
+WHERE 
+EMI>ApplicantIncome*0.5
+
+/*Only 10 applicants have EMI exceeding 50% of income — a very small group.
+But surprisingly 60% still got approved, slightly below the overall 68.73% rate.
+Banks do penalize high EMI burden but not drastically!*/
+
+
+
+
+
+
+
+
+
+
+
+
