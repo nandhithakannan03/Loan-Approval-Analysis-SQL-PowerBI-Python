@@ -63,3 +63,66 @@ Built using SQL Server, Power BI and Python.
 - GitHub — version control and project documentation
 
 ## Project Structure
+## Data Cleaning Steps
+1. Identified NULL values across all 13 columns
+2. Verified mode for all categorical columns before imputing
+3. Fixed data types — converted 3 columns from nvarchar 
+   to correct numeric types
+4. Imputed categorical NULLs with mode values
+5. Imputed LoanAmount NULLs with column average
+6. Fixed Dependents encoding — replaced 3+ with 3
+7. Capped ApplicantIncome outliers at 3x average (₹16,209)
+8. Capped LoanAmount outliers at 3x average (₹439.20)
+
+## Derived Columns Added
+| Column | Formula | Purpose |
+| Household Income | ApplicantIncome + CoapplicantIncome | Total family income |
+| LoanAmount Actual | LoanAmount × 1000 | Loan in actual rupees |
+| EMI | LoanAmount Actual / Loan Term | Monthly payment estimate |
+| DTI Ratio | (EMI / Household Income) × 100 | Repayment burden % |
+
+## SQL Analysis Modules
+| Module | Queries | Focus |
+|---|---|---|
+| A | Q1-Q5 | Overall and demographic approval rates |
+| B | Q6-Q8 | Credit history and risk segmentation |
+| C | Q9-Q12 | Income and loan amount insights |
+| D | Q13-Q15 | Employment and dependent analysis |
+| E | Q16-Q17 | Edge cases and high risk scenarios |
+
+## Power BI Dashboard
+### Page 1 — Executive Summary
+- Total applications KPI card
+- Approval rate gauge
+- Approved vs rejected donut chart
+- Approval by property area bar chart
+- Credit history impact bar chart
+
+### Page 2 — Demographic Breakdown
+- Approval by gender
+- Approval by education pie chart
+- Approval by marital status
+- Approval by dependents column chart
+- Approval by income bracket funnel
+
+### Page 3 — Risk & Financial Analysis
+- Risk tier donut chart
+- Loan amount histogram
+- Good vs bad credit KPI cards
+- Average DTI by loan status
+- Average EMI by loan status
+
+## Machine Learning Models
+| Logistic Regression |
+| Decision Tree | 
+| Random Forest | 
+
+## Dataset
+- Source: Kaggle — Finance Loan Approval Prediction Data
+- 614 rows, 13 original columns
+- 4 derived columns added during cleaning
+- Link: https://www.kaggle.com/datasets/krishnaraj30/
+  finance-loan-approval-prediction-data
+
+## Author
+Nandhitha Kannan
