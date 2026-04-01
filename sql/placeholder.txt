@@ -1,3 +1,9 @@
+-- ================================================
+-- Project: Loan Approval Analysis
+-- Author: Nandhitha Kannan
+-- Description: Data cleaning and analysis queries
+-- Dataset: Kaggle Finance Loan Approval Dataset
+-- ================================================
 
 create database Loan_approval 
 
