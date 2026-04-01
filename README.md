@@ -36,41 +36,41 @@ Built using SQL Server, Power BI and Python.
 
 ### Income & Financial
 - Rejected applicants earn MORE on average (₹6,771) than approved 
-  ones (₹6,414) — income alone does not drive approval
+  ones (₹6,414) - income alone does not drive approval
 - Rejected applicants carry higher DTI (8.47%) vs approved (7.57%)
 - Rejected applicants have higher average EMI burden (₹482 vs ₹463)
 - Approval rates are nearly identical across all income brackets 
-  — only a 3% difference between lowest and highest earners
+  - only a 3% difference between lowest and highest earners
 - Rural applicants borrow the most on average but have the 
   lowest approval rate
 
 ### Demographics
-- Semiurban areas lead with 76% approval — 15% higher than rural
+- Semiurban areas lead with 76% approval - 15% higher than rural
 - Graduates consistently achieve 70% approval regardless of 
   whether they are salaried or self employed
 - Married applicants have 9% higher approval than unmarried ones
-- Self employment has zero impact — both salaried and self 
+- Self employment has zero impact - both salaried and self 
   employed achieve 68% approval
-- Gender gap is minimal — Male 69% vs Female 67%
+- Gender gap is minimal - Male 69% vs Female 67%
 - Applicants with 2 dependents surprisingly achieve the highest 
   approval at 75%
 
 ## Tools & Technologies
-- SQL Server — data cleaning, transformation, 17 analysis queries
-- Power BI — 3 page interactive dashboard with DAX measures
-- Python — EDA, visualization, machine learning models
-- Google Colab — Python development environment
-- GitHub — version control and project documentation
+- SQL Server - data cleaning, transformation, 17 analysis queries
+- Power BI - 3 page interactive dashboard with DAX measures
+- Python - EDA, visualization, machine learning models
+- Google Colab - Python development environment
+- GitHub - version control and project documentation
 
 ## Project Structure
 ## Data Cleaning Steps
 1. Identified NULL values across all 13 columns
 2. Verified mode for all categorical columns before imputing
-3. Fixed data types — converted 3 columns from nvarchar 
+3. Fixed data types - converted 3 columns from nvarchar 
    to correct numeric types
 4. Imputed categorical NULLs with mode values
 5. Imputed LoanAmount NULLs with column average
-6. Fixed Dependents encoding — replaced 3+ with 3
+6. Fixed Dependents encoding - replaced 3+ with 3
 7. Capped ApplicantIncome outliers at 3x average (₹16,209)
 8. Capped LoanAmount outliers at 3x average (₹439.20)
 
@@ -118,7 +118,7 @@ Built using SQL Server, Power BI and Python.
 | Random Forest | 
 
 ## Dataset
-- Source: Kaggle — Finance Loan Approval Prediction Data
+- Source: Kaggle - Finance Loan Approval Prediction Data
 - 614 rows, 13 original columns
 - 4 derived columns added during cleaning
 - Link: https://www.kaggle.com/datasets/krishnaraj30/
