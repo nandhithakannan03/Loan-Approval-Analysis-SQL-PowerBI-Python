@@ -31,7 +31,7 @@ Built using SQL Server, Power BI and Python.
 - Even high income earners with bad credit get approved only 13% 
   of the time - money cannot compensate for poor credit
 - High risk applicants have only 20% approval vs 87% for low risk
-- 50 applicants had missing credit history — the largest NULL 
+- 50 applicants had missing credit history - the largest NULL 
   count in the dataset
 
 ### Income & Financial
